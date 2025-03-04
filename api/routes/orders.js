@@ -7,6 +7,8 @@ const Order = require('../models/order')
 router.get('/', (req, res, next) =>{
     Order.find()
     .select("product quantity _id")
+    .populate('product')
+    .exec()
     .then(orders => {
         res.status(200).json({
             count: orders.length,
@@ -64,6 +66,8 @@ router.post('/', (req, res, next) =>{
 
 router.get('/:orderId', (req, res, next) =>{
     Order.findById(req.params.orderId)
+    .populate('product')
+    .exec()
     .then(order => {
         res.status(200).json({
             order: order,
@@ -80,6 +84,7 @@ router.get('/:orderId', (req, res, next) =>{
 
 router.delete('/:orderId', (req, res, next) => {
     Order.findByIdAndDelete(req.params.orderId)
+    .exec()
     .then(
         res.status(200).json({
             message: "order deleted successfully",
