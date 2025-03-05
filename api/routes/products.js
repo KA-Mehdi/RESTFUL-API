@@ -2,24 +2,40 @@ const express = require("express");
 const router = express.Router();
 const Product = require("../models/product");
 const mongoose = require("mongoose");
+const multer = require("multer");
+const path = require('path'); 
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    // Ensure we're targeting the 'uploads' folder directly in the 'api' folder
+    const uploadPath = path.resolve(__dirname, '../uploads'); // Go up one level to the 'api' folder
+    console.log('Upload Path:', uploadPath);  // Log the resolved path to check if it is correct
+    cb(null, uploadPath); // Ensure multer uses this path
+  },
+  filename: function (req, file, cb) {
+    cb(null, new Date().toISOString() + file.originalname);
+  },
+});
+
+
+const upload = multer({ storage : storage });
 
 router.get("/", (req, res, next) => {
   Product.find()
-  .select('name price _id')
-  .then((products) => {
+    .select("name price _id")
+    .then((products) => {
       const response = {
-          count: products.length,
-          products : products.map(product => ({
-                name: product.name,
-                price: product.price,
-                _id: product._id,
-                request: {
-                    type:"GET",
-                    url:`http://localhost:3000/${product.id}`
-                }
-
-          }))
-      }
+        count: products.length,
+        products: products.map((product) => ({
+          name: product.name,
+          price: product.price,
+          _id: product._id,
+          request: {
+            type: "GET",
+            url: `http://localhost:3000/${product.id}`,
+          },
+        })),
+      };
       res.status(200).json(response);
     })
     .catch((err) => {
@@ -30,10 +46,8 @@ router.get("/", (req, res, next) => {
     });
 });
 
-
-
-
-router.post("/", (req, res, next) => {
+router.post("/", upload.single("productImage"), (req, res, next) => {
+  console.log(req.file);
   const product = new Product({
     _id: new mongoose.Types.ObjectId(),
     name: req.body.name,
@@ -45,14 +59,14 @@ router.post("/", (req, res, next) => {
       res.status(201).json({
         message: "Created product successfully",
         createdProduct: {
-            name: result.name,
-            price: result.price,
-            _id: result._id,
-            request: {
-                type:"GET",
-                url:`http://localhost:3000/${result.id}`
-            }
-        }
+          name: result.name,
+          price: result.price,
+          _id: result._id,
+          request: {
+            type: "GET",
+            url: `http://localhost:3000/${result.id}`,
+          },
+        },
       });
     })
     .catch((err) => {
@@ -63,8 +77,6 @@ router.post("/", (req, res, next) => {
     });
 });
 
-
-
 router.get("/:productId", (req, res, next) => {
   const id = req.params.productId;
   Product.findById(id)
@@ -72,11 +84,11 @@ router.get("/:productId", (req, res, next) => {
     .then((doc) => {
       if (doc) {
         res.status(200).json({
-            product: doc,
-            request:{
-                type: "GET",
-                url:"http://localhost:3000/products/"
-            }
+          product: doc,
+          request: {
+            type: "GET",
+            url: "http://localhost:3000/products/",
+          },
         });
       } else {
         res.status(404).json({
@@ -92,55 +104,51 @@ router.get("/:productId", (req, res, next) => {
     });
 });
 
-
-
 router.patch("/:productId", (req, res, next) => {
-    const id = req.params.productId
-    const updateOps = {};
-    for (const ops of req.body){
-        updateOps[ops.propName] = ops.value;
-    }
+  const id = req.params.productId;
+  const updateOps = {};
+  for (const ops of req.body) {
+    updateOps[ops.propName] = ops.value;
+  }
 
-    Product.findByIdAndUpdate({_id: id}, {$set: updateOps})
-      .exec()
-      .then(result => {
-        res.status(200).json({
-            message: 'product updated',
-            request: {
-                type:'GET',
-                url: 'http://localhost:3000/products/'
-            }
-        })
+  Product.findByIdAndUpdate({ _id: id }, { $set: updateOps })
+    .exec()
+    .then((result) => {
+      res.status(200).json({
+        message: "product updated",
+        request: {
+          type: "GET",
+          url: "http://localhost:3000/products/",
+        },
+      });
     })
-    .catch(err => {
-        res.status(500).json({
-            error: err
-        })
-    })
+    .catch((err) => {
+      res.status(500).json({
+        error: err,
+      });
+    });
 });
 
-
-
 router.delete("/:productId", (req, res, next) => {
-    const id = req.params.productId;
-    Product.findByIdAndDelete({_id: id})
-      .exec()
-      .then((result) => {
-        // res.console('deleted successfully')
-        res.status(200).json({
-            message: 'product deleted',
-            request: {
-                type:'POST',
-                url: 'http://localhost:3000/products',
-                body: {name: 'String', price: 'Number'}
-            }
-        });
+  const id = req.params.productId;
+  Product.findByIdAndDelete({ _id: id })
+    .exec()
+    .then((result) => {
+      // res.console('deleted successfully')
+      res.status(200).json({
+        message: "product deleted",
+        request: {
+          type: "POST",
+          url: "http://localhost:3000/products",
+          body: { name: "String", price: "Number" },
+        },
+      });
     })
-    .catch(err => {
-        console.log(err)
-        res.status(500).json({
-            error: err
-        })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({
+        error: err,
+      });
     });
 });
 

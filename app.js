@@ -9,6 +9,7 @@ dotenv.config();
 
 const ProductRoutes = require("./api/routes/products");
 const OrderRoutes = require("./api/routes/orders");
+const userRoutes = require("./api/routes/user")
 
 mongoose
   .connect(process.env.MONGO_ATLAS_PW)
@@ -36,6 +37,7 @@ app.use((req, res, next) => {
 // Routes <hich should handle requests
 app.use("/Products", ProductRoutes);
 app.use("/Orders", OrderRoutes);
+app.use("/User", userRoutes);
 
 app.use((req, res, next) => {
   const error = new Error("not found");
