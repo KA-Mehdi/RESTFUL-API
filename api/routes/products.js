@@ -3,24 +3,24 @@ const router = express.Router();
 const Product = require("../models/product");
 const mongoose = require("mongoose");
 const multer = require("multer");
-const path = require('path'); 
+// const path = require('path'); 
 const checkAuth = require('../middleware/check-auth')
 
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    // Ensure we're targeting the 'uploads' folder directly in the 'api' folder
-    const uploadPath = path.resolve(__dirname, '../uploads'); // Go up one level to the 'api' folder
-    console.log('Upload Path:', uploadPath);  // Log the resolved path to check if it is correct
-    cb(null, uploadPath); // Ensure multer uses this path
-  },
-  filename: function (req, file, cb) {
-    cb(null, new Date().toISOString() + file.originalname);
-  },
-});
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     // Ensure we're targeting the 'uploads' folder directly in the 'api' folder
+//     const uploadPath = path.resolve(__dirname, '../uploads'); // Go up one level to the 'api' folder
+//     console.log('Upload Path:', uploadPath);  // Log the resolved path to check if it is correct
+//     cb(null, uploadPath); // Ensure multer uses this path
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, new Date().toISOString() + file.originalname);
+//   },
+// });
 
 
-const upload = multer({ storage : storage });
+// const upload = multer({ storage : storage });
 
 router.get("/", (req, res, next) => {
   Product.find()
@@ -48,8 +48,7 @@ router.get("/", (req, res, next) => {
     });
 });
 
-router.post("/", checkAuth ,upload.single("productImage"), (req, res, next) => {
-  console.log(req.file);
+router.post("/", checkAuth,  (req, res, next) => {
   const product = new Product({
     _id: new mongoose.Types.ObjectId(),
     name: req.body.name,
@@ -106,7 +105,7 @@ router.get("/:productId", (req, res, next) => {
     });
 });
 
-router.patch("/:productId", (req, res, next) => {
+router.patch("/:productId", checkAuth, (req, res, next) => {
   const id = req.params.productId;
   const updateOps = {};
   for (const ops of req.body) {
@@ -131,12 +130,11 @@ router.patch("/:productId", (req, res, next) => {
     });
 });
 
-router.delete("/:productId", (req, res, next) => {
+router.delete("/:productId", checkAuth, (req, res, next) => {
   const id = req.params.productId;
   Product.findByIdAndDelete({ _id: id })
     .exec()
     .then((result) => {
-      // res.console('deleted successfully')
       res.status(200).json({
         message: "product deleted",
         request: {

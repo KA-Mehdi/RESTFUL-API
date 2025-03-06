@@ -40,7 +40,7 @@ app.use("/Orders", OrderRoutes);
 app.use("/User", userRoutes);
 
 app.use((req, res, next) => {
-  const error = new Error("not found");
+  const error = new Error("not / found");
   error.status = 404;
   next(error);
 });
